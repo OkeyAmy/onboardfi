@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 
 interface CurvedLoopProps {
@@ -22,6 +22,7 @@ const CurvedLoop: React.FC<CurvedLoopProps> = ({
   const textRef = useRef<SVGTextElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const animRef = useRef<gsap.core.Tween | null>(null);
+  const [pathId] = useState(() => `curved-path-${Math.random().toString(36).slice(2, 9)}`);
 
   useEffect(() => {
     if (!textRef.current) return;
@@ -31,8 +32,11 @@ const CurvedLoop: React.FC<CurvedLoopProps> = ({
 
     const dur = 20 / speed;
 
+    // Set initial startOffset based on direction
+    gsap.set(textPath, { attr: { startOffset: direction === 'left' ? '0%' : '-100%' } });
+
     animRef.current = gsap.to(textPath, {
-      attr: { startOffset: direction === 'left' ? '-100%' : '100%' },
+      attr: { startOffset: direction === 'left' ? '-100%' : '0%' },
       duration: dur,
       ease: 'none',
       repeat: -1,
@@ -83,20 +87,21 @@ const CurvedLoop: React.FC<CurvedLoopProps> = ({
     };
   }, [interactive, curveAmount]);
 
-  const repeatedText = Array(12).fill(marqueeText).join(' ');
+  // Use enough repetitions to fill the path even during animation
+  const repeatedText = Array(20).fill(marqueeText).join(' ');
 
   return (
     <svg
       ref={svgRef}
       viewBox="0 0 1920 500"
-      preserveAspectRatio="none"
+      preserveAspectRatio="xMidYMid meet"
       className={`w-full h-full ${className}`}
-      style={{ overflow: 'visible' }}
+      style={{ overflow: 'visible', display: 'block' }}
     >
       <defs>
         <path
           ref={pathRef}
-          id="curved-path"
+          id={pathId}
           d={`M 0 250 Q 960 ${250 + curveAmount} 1920 250`}
         />
       </defs>
@@ -110,7 +115,7 @@ const CurvedLoop: React.FC<CurvedLoopProps> = ({
           textTransform: 'uppercase',
         }}
       >
-        <textPath href="#curved-path" startOffset="0%">
+        <textPath href={`#${pathId}`} startOffset="0%">
           {repeatedText}
         </textPath>
       </text>
